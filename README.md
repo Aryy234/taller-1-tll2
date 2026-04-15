@@ -7,8 +7,21 @@ Se refactorizó el código original para cumplir con los principios de diseño d
 Se crearon las siguientes responsabilidades:
 
 1.  **`GeneradorDegradados`**: Se creó una nueva clase independiente encargada exclusivamente de calcular los píxeles para generar degradados desde cero. Esto mantiene el código limpio y permite que los efectos sean reutilizados.
-    *   Se definieron métodos para crear gradientes lineales (izquierda a derecha, derecha a izquierda, arriba a abajo, abajo a arriba) y un degradado radial (centro a esquinas).
-    *   Se implementó el método `interpolarColor` que calcula la transición entre dos colores dependiendo de una relación (radio 0.0 a 1.0) que indica la posición del píxel en el lienzo, generando así el efecto visual de difuminado continuo.
+    
+    ### Detalle de Funciones en `GeneradorDegradados`
+    *   **`izquierdaADerecha`**: Genera un degradado horizontal. El recorrido sobre los píxeles determina un `radio` progresivo calculando la relación de la coordenada `x` respecto al `ancho` total (`x / ancho`). Esto hace que el color difumine desde el inicio en el borde izquierdo hasta el final en el borde derecho.
+    *   **`derechaAIzquierda`**: Funciona igual que el anterior, pero invirtiendo la proporción del `radio` (`1.0 - (x / ancho)`). Como resultado, el color inicial se plasma en la derecha y fluye hacia la izquierda.
+    *   **`arribaAAbajo`**: Genera un degradado vertical. Calcula la proporción en base a la coordenada `y` respecto al `alto` total (`y / alto`). Inicia el color de degradado en el límite superior y lo difumina hacia el inferior.
+    *   **`abajoAArriba`**: Degradado vertical invertido. El cálculo del `radio` es `1.0 - (y / alto)`. El color de inicio se asienta en la parte inferior de la imagen.
+    *   **`centroAEsquinas`**: Genera un degradado radial o circular. Identifica el centro de la imagen y calcula la distancia euclidiana de cada píxel hacia este punto usando el Teorema de Pitágoras. El `radio` de interpolación es la proporción de dicha distancia respecto a la distancia máxima posible hacia una esquina.
+    *   **`interpolarColor`**: Es la función matemática de soporte. Toma el componente Red, Green y Blue de los dos colores configurados y, basándose en la proporción que va de `0.0` a `1.0` (el `radio`), calcula el tinte exacto mediante una combinación lineal, logrando así un cambio de tono imperceptible y fluido.
+
+## ¿Qué es y cómo funciona `BufferedImage`?
+
+La herramienta principal para la creación gráfica en este proyecto es la clase **`BufferedImage`** proporcionada por Java (`java.awt.image`). 
+* **Un lienzo en memoria:** Funciona creando una cuadrícula bidimensional (como una matriz) que reside temporalmente en la memoria RAM (el *buffer*). Esta cuadrícula representa el espacio de la imagen definido por el `ancho` y `alto`.
+* **Codificación de color:** Al instanciarla con `BufferedImage.TYPE_INT_RGB`, le instruimos a Java que asigne un bloque de espacio donde cada elemento de la cuadrícula (cada píxel) guardará su color como un único número entero (`int`), el cual agrupa los componentes primarios del color: Rojo (Red), Verde (Green) y Azul (Blue).
+* **Control absoluto:** Lo que la hace ideal para generar degradados es que permite manipular directamente la información de color de cada punto usando el método `setRGB(x, y, color)`. Gracias a esto, mediante ciclos repetitivos (`for`), viajamos por cada coordenada matemática $(x, y)$ rellenando el lienzo dinámicamente según dicten los cálculos del degradado.
 
 2.  **`Imagen` (Clase Principal)**: Ahora actúa como un orquestador. 
     *   Define el tamaño del lienzo (800x600 px).
